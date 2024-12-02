@@ -1,0 +1,197 @@
+ODANDUBWNPTOHOAWANHMUBPWNPHE
+
+MOMAIYNNYNNYAYNYNNNYAAGDVAGDAGDVGVGAVG9uUUUHUHUHHHHUHH EHR HHH HERE RREWWWWWWWWWwWWnNnnnNnNNNNNNN
+WNP SODIAYKDRUBWNPFPBSOWAINAAURWNPTOAWAIYDURBWNPTOWIKDRUVBWNPFPTODIYDURWNPSHOAINDUBWNE SD
+
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+ee)
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+
+PPPPPPHPHE PB
+ODNHDRUHKRWNES
+
+from flask import Flask, redirect, url_for, render_template, request, session, flash, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
+
+from werkzeug.utils import secure_filename
+
+import os
+
+import nbformat as nbf
+
+from flask_migrate import Migrate
+
+from execution import add_image_to_notebook
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Base directory for resolving paths
+BASE_DIR = os.path.abspath(os.path.dirname(__file_))
+
+# Configure the database URI
+
+DATABASE_PATH = os.path.join(BASE_DIR, ‘database', ‘app.db')
+
+app. config ['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DATABASE_PATH}"
+app. config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Configure upload folder and allowed file extensions
+
+UPLOAD_FOLDER = os.path.join(BASE_DIR, ‘static’, ‘uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+app.config['ALLOWED_EXTENSIONS'] = {'png', ‘jpg', ‘jpeg', ‘gif', ‘pdf', ‘txt'}
+app.config['SECRET_KEY'] = ‘a_really_secret_key_that_is_unique_and_long_enough'
+
+# Initialize SQLAlchemy and Flask-Migrate
+db = SQLAlchemy (app)
+migrate = Migrate(app, db)
+
+# Define the User model
+class User(db.Model):
+id = db.Column(db.Integer, primary_key=True)
+first_name = db.Column(db.String(120), nullable=False)
+last_name = db.Column(db.String(120), nullable=False)
+email = db.Column(db.String(120), unique=True, nullable=False)
+password = db.Column(db.String(12@), nullable=False)
+uploaded_files = db.relationship( 'UploadedFile', back_populates='user')
+
+# Define the UploadedFile model
+class UploadedFile(db.Model):
+id = db.Column(db.Integer, primary_key=True)
+filename = db.Column(db.String(120), nullable=False)
+user_id = db.Column(db.Integer, db.ForeignKey(‘user.id'), nullable=False)
+user = db.relationship('User', back_populates='uploaded_files')
+
+# Allowed file extensions
+def allowed_file( filename):
+return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+# Routes
+@app. route('/', methods=['GET', ‘POST'])
+def home():
+
+return render_template('home.htm1')
+
+@app. route("/team")
+def team():
+return render_template(‘'team.htm1')
+
+@app. route('/signup', methods=['POST', ‘GET'])
+def signup():
+if request.method == 'POST':
+first_name = request. form.get('first_name')
+last_name = request. form.get(‘last_name')
+email = request. form.get('email')
+password = request. form.get('password')
+
+if not all([first_name, last_name, email, password]):
+flash('All fields are required!', ‘danger')
+return redirect(url_for('signup'))
+
+if User. query. filter_by(email=email).first():
+flash('Email already exists. Please log in or use a different email.', ‘danger')
+return redirect(url_for('signup'))
+
+user = User(first_name=first_name, last_name=last_name, email=email, password=password)
+db.session.add(user)
+db. session. commit ()
+
+flash('Account created successfully! You can now log in.', ‘success')
+return redirect(url_for('login'))
+
+return render_template('sign_up.html')
+
+@app. route("/login", methods=['GET', ‘POST'])
+def login():
+if request.method == 'POST':
+email = request. form.get('email')
+password = request. form.get('password')
+
+user = User.query. filter_by(email=email) .first()
+
+if user and user.password == password:
+session['user_id'] = user.id
+flash('Login successful!', 'success')
+return redirect (url_for('upload'))
+
+flash('Invalid email or password. Please try again.', ‘danger')
+return redirect(url_for('login'))
+
+return render_template('login.html')
+
+@app. route("/upload", methods=['POST', ‘GET'])
+def upload():
+if ‘'user_id' not in session:
+flash('You need to be logged in to upload a file.', ‘'danger')
+return redirect(url_for('login'))
+
+if request.method == 'POST':
+file = request. files.get('file')
+if not file or file.filename == '':
+flash('No selected file.', ‘danger')
+return redirect (request.url)
+
+if file and allowed_file(file. filename) :
+if not os.path.exists(UPLOAD_FOLDER):
+os.makedirs(UPLOAD_FOLDER)
+
+filename = secure_filename(file. filename)
+file_path = os.path.join(UPLOAD_FOLDER, filename)
+file.save(file_path)
+
+add_image_to_notebook(file_path)
+
+uploaded_file = UploadedFile(filename=filename, user_id=session['user_id'])
+db. session. add(uploaded_file)
+db. session. commit ()
+
+flash('File uploaded successfully.', 'success')
+return redirect(url_for('result', filename=filename) )
+
+return render_template( ‘upload.html')
+
+@app. route("/results", methods=['GET'])
+
+def result():
+filename = request.args.get(‘'filename')
+image_url = url_for(‘uploaded_file', filename=filename) if filename else None
+return render_template('result.html', filename=filename, image_url=image_url)
+
+@app. route('/static/uploads/<filename>' )
+def uploaded_file(filename) :
+return send_from_directory(UPLOAD_FOLDER, filename)
+
+@app. route("/whats_new")
+def whats_new():
+return render_template( ‘whats_new.html')
+
+if __name__ == '_main_':
+with app.app_context():
+db.create_all()
+app. run(port=5000, debug=True)
+

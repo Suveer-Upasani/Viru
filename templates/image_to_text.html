@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Text</title>
+</head>
+
+<body>
+    <h1>Upload an Image to Extract Text</h1>
+    <form method="POST" action="{{ url_for('image_to_text_route') }}" enctype="multipart/form-data">
+        <label for="image_file">Choose an image to upload:</label>
+        <input type="file" name="image_file" id="image_file" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if result %}
+    <div>
+        <h2>Extracted Text:</h2>
+        <p>{{ result|safe }}</p>
+    </div>
+    {% endif %}
+</body>
+
+</html>
