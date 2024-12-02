@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, session
 from flask_sqlalchemy import SQLAlchemy
 import os
 import uuid
@@ -63,6 +63,7 @@ def login():
         
         user = User.query.filter_by(email=email).first()
         if user and user.password == password:  # Directly compare the password
+            session['user_id'] = user.id  # Store user info in session
             flash('Login successful!', category='success')
             return redirect(url_for('landing_page'))  # Redirect to landing page after successful login
         else:
@@ -73,6 +74,11 @@ def login():
 # Landing page route after login
 @app.route("/landing_page")
 def landing_page():
+    # Check if the user is logged in, else redirect to login
+    if 'user_id' not in session:
+        flash('You need to login first.', category='error')
+        return redirect(url_for('login'))
+    
     return render_template('landing_page.html')
 
 # Text to Audio page route

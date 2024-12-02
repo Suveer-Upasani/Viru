@@ -5,23 +5,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        button:hover {
+            background-color: #007bff;
+            transform: scale(1.05);
+        }
+
+        .logout-button {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .profile-button {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .navigation-button {
+            background-color: #008CBA;
+            color: white;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a:hover button {
+            background-color: #005f73;
+        }
+    </style>
 </head>
 
 <body>
     <h1>Welcome to the Landing Page</h1>
-    <button type="submit">Logout</button>
-    <button type="submit">Profile</button>
 
     <br><br>
 
     <!-- Button to navigate to the text_to_audio route -->
     <a href="{{ url_for('text_to_audio') }}">
-        <button type="button">Go to Text to Audio</button>
+        <button class="navigation-button" type="button">Go to Text to Audio</button>
     </a>
 
     <!-- Button to navigate to the image_to_text route -->
     <a href="{{ url_for('image_to_text') }}">
-        <button type="button">Go to Image to Text</button>
+        <button class="navigation-button" type="button">Go to Image to Text</button>
     </a>
 </body>
 
