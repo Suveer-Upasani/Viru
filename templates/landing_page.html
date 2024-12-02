@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Welcome to the Landing Page</h1>
+    <button type="submit">Logout</button>
+    <button type="submit">Profile</button>
+
+    <br><br>
+
+    <!-- Button to navigate to the text_to_audio route -->
+    <a href="{{ url_for('text_to_audio') }}">
+        <button type="button">Go to Text to Audio</button>
+    </a>
+
+    <!-- Button to navigate to the image_to_text route -->
+    <a href="{{ url_for('image_to_text') }}">
+        <button type="button">Go to Image to Text</button>
+    </a>
+</body>
+
+</html>
