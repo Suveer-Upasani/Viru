@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Preview</title>
+    <script>
+        // Automatically play the audio once the page loads
+        window.onload = function () {
+            var audioElement = document.getElementById("audioPlayer");
+            audioElement.play();  // Play the audio file automatically
+        };
+    </script>
+</head>
+
+<body>
+    <h1>Your Text-to-Speech Audio</h1>
+    <audio id="audioPlayer" controls autoplay>
+        <source src="{{ url_for('static', filename='outputs/audio/' + audio_file) }}" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+</body>
+
+</html>

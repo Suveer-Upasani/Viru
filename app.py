@@ -122,15 +122,15 @@ def text_to_audio():
                         # Save audio data to an mp3 file
                         try:
                             with open(audio_path, 'wb') as audio_file:
-                                audio_file.write(audio_output)
+                                audio_file.write(audio_output.read())  # Write binary audio data
                                 print(f"Audio saved at: {audio_path}")
                         except Exception as e:
                             print(f"Error writing audio file: {e}")
                             flash("Error saving audio file.", category='error')
                             return redirect(url_for('text_to_audio'))
 
-                        # Return the generated audio file for download
-                        return send_from_directory(app.config['AUDIO_OUTPUT_FOLDER'], 'output.mp3', as_attachment=True)
+                        # Return the generated audio file for immediate playback
+                        return render_template('audio_preview.html', audio_file='output.mp3')
 
                     else:
                         flash("Audio conversion failed.", category='error')
