@@ -4,21 +4,24 @@ import os
 import uuid
 from PIL import Image
 import pytesseract
+import test
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/suveer/Desktop/Tooler/users.db'  # Correct full path to SQLite DB
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/suveer/Desktop/Tooler/users.db'  # Correct path to SQLite DB
 app.config['SECRET_KEY'] = 'your_secret_key'  # Secret key for sessions
 db = SQLAlchemy(app)
 
 # Define paths for uploading and saving files
-UPLOAD_FOLDER = '/Users/suveer/Desktop/Tooler/uploads/image_uploads/'
+UPLOAD_FOLDER = '/Users/suveer/Desktop/Tooler/uploads/text_uploads/'
 TEXT_OUTPUT_PATH = '/Users/suveer/Desktop/Tooler/uploads/image_content.txt'
+AUDIO_OUTPUT_FOLDER = '/Users/suveer/Desktop/Tooler/outputs/audio/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['AUDIO_OUTPUT_FOLDER'] = AUDIO_OUTPUT_FOLDER
 
-# Ensure the upload directory exists
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+# Ensure directories exist
+for folder in [UPLOAD_FOLDER, AUDIO_OUTPUT_FOLDER]:
+    os.makedirs(folder, exist_ok=True)
 
 # User model with first name, last name, email, and password (no hashing for simplicity)
 class User(db.Model):
@@ -41,7 +44,7 @@ def sign_up():
         last_name = request.form['last_name']
         email = request.form['email']
         password = request.form['password']
-        
+
         new_user = User(first_name=first_name, last_name=last_name, email=email, password=password)
         try:
             db.session.add(new_user)
@@ -51,7 +54,7 @@ def sign_up():
         except:
             flash('Email already exists!', category='error')
             return redirect(url_for('sign_up'))
-    
+
     return render_template('sign_up.html')
 
 # Login route
@@ -60,34 +63,90 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        
+
         user = User.query.filter_by(email=email).first()
-        if user and user.password == password:  # Directly compare the password
-            session['user_id'] = user.id  # Store user info in session
+        if user and user.password == password:
+            session['user_id'] = user.id
             flash('Login successful!', category='success')
-            return redirect(url_for('landing_page'))  # Redirect to landing page after successful login
+            return redirect(url_for('landing_page'))
         else:
             flash('Login failed. Check your credentials and try again.', category='error')
-    
+
     return render_template('login.html')
 
 # Landing page route after login
-@app.route("/landing_page")
+@app.route('/landing_page')
 def landing_page():
-    # Check if the user is logged in, else redirect to login
     if 'user_id' not in session:
         flash('You need to login first.', category='error')
         return redirect(url_for('login'))
-    
+
     return render_template('landing_page.html')
 
 # Text to Audio page route
-@app.route("/text_to_audio")
+@app.route('/text_to_audio', methods=['POST', 'GET'])
 def text_to_audio():
+    if request.method == 'POST':
+        file = request.files.get('file')
+        language = request.form.get('language')
+
+        if file and language:
+            if file.filename.endswith('.txt'):
+                filename = str(uuid.uuid4()) + '.txt'
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                
+                # Save the uploaded file
+                try:
+                    file.save(file_path)
+                    print(f"File saved at: {file_path}")
+                except Exception as e:
+                    print(f"Error saving file: {e}")
+                    flash("Error saving the file.", category='error')
+                    return redirect(url_for('text_to_audio'))
+
+                try:
+                    # Read the text from the file
+                    with open(file_path, 'r', encoding='utf-8') as text_file:
+                        text = text_file.read()
+                    
+                    if not text.strip():
+                        flash("The text file is empty.", category='error')
+                        return redirect(url_for('text_to_audio'))
+
+                    # Call the run_test method to convert text to audio
+                    audio_output = test.run_test(text, language)
+
+                    if audio_output:
+                        audio_path = os.path.join(app.config['AUDIO_OUTPUT_FOLDER'], 'output.mp3')
+
+                        # Save audio data to an mp3 file
+                        try:
+                            with open(audio_path, 'wb') as audio_file:
+                                audio_file.write(audio_output)
+                                print(f"Audio saved at: {audio_path}")
+                        except Exception as e:
+                            print(f"Error writing audio file: {e}")
+                            flash("Error saving audio file.", category='error')
+                            return redirect(url_for('text_to_audio'))
+
+                        # Return the generated audio file for download
+                        return send_from_directory(app.config['AUDIO_OUTPUT_FOLDER'], 'output.mp3', as_attachment=True)
+
+                    else:
+                        flash("Audio conversion failed.", category='error')
+                except Exception as e:
+                    print(f"Error processing the file: {e}")
+                    flash(f"Error processing the file: {e}", category='error')
+            else:
+                flash("Please upload a valid .txt file.", category='error')
+        else:
+            flash("File or language not provided!", category='error')
+            return redirect(url_for('text_to_audio'))
+
     return render_template('text_to_audio.html')
 
 # Image to Text route
-@app.route("/image_to_text", methods=['GET', 'POST'])
+@app.route('/image_to_text', methods=['GET', 'POST'])
 def image_to_text():
     result = None
     image_file = None
@@ -95,33 +154,27 @@ def image_to_text():
 
     if request.method == 'POST':
         image_file = request.files.get('image_file')
-        
+
         if image_file:
-            # Ensure the image has a valid extension
             if image_file.filename.split('.')[-1].lower() in ['png', 'jpg', 'jpeg']:
-                # Create a unique filename to avoid overwriting
                 filename = str(uuid.uuid4()) + '.' + image_file.filename.split('.')[-1]
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                
+
                 try:
-                    # Save the image to the upload folder
                     image_file.save(file_path)
-                    
-                    # Extract text from the image
                     image = Image.open(file_path)
                     text = pytesseract.image_to_string(image)
 
-                    if text.strip():  # If text was extracted
+                    if text.strip():
                         text_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'image_content.txt')
                         with open(text_filename, 'w') as text_file:
                             text_file.write(text)
 
                         flash("Text extracted successfully!", category='success')
                         result = text
-                        text_file = 'image_content.txt'  # Show the filename to download
+                        text_file = 'image_content.txt'
                     else:
                         flash("No text extracted from the image.", category='error')
-                
                 except Exception as e:
                     flash(f"Error processing the image: {e}", category='error')
             else:

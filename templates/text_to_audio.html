@@ -25,116 +25,50 @@
 
         h1 {
             font-size: 2em;
-            margin-bottom: 20px;
             text-align: center;
+            color: #333;
         }
 
-        label {
-            font-size: 1.1em;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        select,
         input[type="file"] {
-            width: 100%;
+            display: block;
+            margin: 20px auto;
+        }
+
+        select {
             padding: 10px;
-            margin-bottom: 20px;
             font-size: 1em;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            margin: 20px 0;
+            display: block;
+            width: 100%;
         }
 
         button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
+            padding: 15px 20px;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
-            font-size: 1.1em;
+            width: 100%;
+            font-size: 1.2em;
         }
 
         button:hover {
             background-color: #45a049;
         }
 
-        /* Card styling */
-        .card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .card img {
-            width: 100%;
-            height: auto;
-        }
-
-        .card-body {
-            padding: 20px;
-        }
-
-        .card-title {
-            font-size: 1.5em;
-            margin-bottom: 10px;
-        }
-
-        .card-text {
-            font-size: 1em;
-            margin-bottom: 15px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-
-        /* Placeholder for loading state */
-        .placeholder-glow {
-            background-color: #f0f0f0;
-            color: transparent;
-            animation: glow 1.5s infinite ease-in-out;
-        }
-
-        @keyframes glow {
-            0% {
-                background-color: #f0f0f0;
-            }
-
-            50% {
-                background-color: #e0e0e0;
-            }
-
-            100% {
-                background-color: #f0f0f0;
-            }
-        }
-
-        .placeholder {
-            height: 20px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+        .message {
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Upload a Text File</h1>
-
-        <form action="/" method="POST" enctype="multipart/form-data">
-            <label for="language">Select Language:</label>
-            <select name="language" id="language" required>
+        <h1>Convert Text to Audio</h1>
+        <form action="/text_to_audio" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <select name="language" required>
                 <option value="English">English</option>
                 <option value="French">French</option>
                 <option value="Spanish">Spanish</option>
@@ -143,19 +77,15 @@
                 <option value="Marathi">Marathi</option>
                 <option value="Hindi">Hindi</option>
             </select>
-            <br><br>
-            <label for="file">Choose a text file to upload:</label>
-            <input type="file" name="file" id="file" accept=".txt" required>
-            <br><br>
-            <button type="submit">Upload</button>
+            <button type="submit">Upload & Convert</button>
         </form>
-
-        <!-- Link to image upload page -->
-        <a href="{{ url_for('image_to_text') }}">
-            <button type="button">Upload Image</button>
-        </a>
-
     </div>
+
+    {% if message %}
+    <div class="message">
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
 </body>
 
 </html>
